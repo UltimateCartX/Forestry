@@ -79,6 +79,8 @@ fun ConfigurationScreen(
     var openBondedDevicesDialog by remember { mutableStateOf(false) }
     var projectCreationFormDialogOpened by remember { mutableStateOf(false) }
 
+    viewModel.setProjectCreationMode(false)
+
     Scaffold(
         topBar = {
             TopAppBar(

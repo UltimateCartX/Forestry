@@ -135,7 +135,7 @@ fun PreferencesScreen(
                     Icons.Filled.Build,
                     "Version de l'application",
                     {},
-                    underText = "a-0.24.1"
+                    underText = "a-0.24.2"
                 )
             }
         }

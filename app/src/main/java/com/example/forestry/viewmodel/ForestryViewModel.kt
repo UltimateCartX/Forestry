@@ -201,9 +201,6 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
         }
     }
 
-    private val _projectCreationMode = MutableStateFlow<Boolean>(false)
-    val projectCreationMode: StateFlow<Boolean> = _projectCreationMode
-
     // GNSS
 
     open val gnssConnectionState: StateFlow<BluetoothConnectionState> = gnssRepository.connectionState
@@ -241,6 +238,12 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
 
     fun setCurrentProject(project: Project) {
         _currentProject.value = project
+    }
+
+    private val _projectCreationMode = MutableStateFlow(false)
+    val projectCreationMode: StateFlow<Boolean> = _projectCreationMode
+    fun setProjectCreationMode(mode: Boolean) {
+        _projectCreationMode.value = mode
     }
 
     private val _projectCreationName = MutableStateFlow("")
