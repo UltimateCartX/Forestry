@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
@@ -40,7 +41,6 @@ import com.example.forestry.ui.previews.PreviewLightDarkCombo
 import com.example.forestry.utils.rainbow
 import com.example.forestry.viewmodel.ForestryViewModel
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun LoginScreen(
     viewModel: ForestryViewModel,
@@ -78,17 +78,19 @@ fun LoginScreenContent(
             modifier = modifier.fillMaxSize()
         ) {
             Image(
-                painterResource(R.drawable.icon_forest_filled),
+                painter = painterResource(R.drawable.icon_forest_filled),
                 contentDescription = null,
-                modifier = Modifier.padding(4.dp).size(128.dp)
+                modifier = Modifier
+                    .padding(4.dp)
+                    .size(128.dp)
             )
             Text(
-                "Forestry",
+                text = "Forestry",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(4.dp)
             )
             OutlinedTextField(
-                emailText,
+                value = emailText,
                 textStyle = rainbow,
                 shape = MaterialTheme.shapes.medium,
                 keyboardOptions = KeyboardOptions(
@@ -102,13 +104,12 @@ fun LoginScreenContent(
                         contentDescription = null
                     )
                 },
+                singleLine = true,
                 label = { Text("E-Mail") },
 
                 modifier = Modifier
                     .padding(4.dp)
-                    .semantics {
-                        contentType = ContentType.EmailAddress
-                    }
+                    .semantics { contentType = ContentType.EmailAddress }
             )
             OutlinedTextField(
                 value = passwordText,
@@ -118,6 +119,7 @@ fun LoginScreenContent(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
                 ),
+                keyboardActions = KeyboardActions(onDone = { login() }),
                 onValueChange = onPasswordTextChange,
                 leadingIcon = {
                     Icon(
@@ -126,18 +128,17 @@ fun LoginScreenContent(
                     )
                 },
                 label = { Text("Mot de passe") },
+                singleLine = true,
                 modifier = Modifier
                     .padding(4.dp)
-                    .semantics {
-                        contentType = ContentType.Password
-                    }
+                    .semantics { contentType = ContentType.Password }
             )
             Button(
                 onClick = login,
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(top = 16.dp)
             ) {
                 Text(
-                    "Se connecter",
+                    text = "Se connecter",
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -146,7 +147,7 @@ fun LoginScreenContent(
                 modifier = Modifier.padding(4.dp)
             ) {
                 Text(
-                    "Continuer en mode hors ligne",
+                    text = "Continuer en mode hors ligne",
                     style = MaterialTheme.typography.labelLarge
                 )
             }

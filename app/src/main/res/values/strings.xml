@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Forestry</string>
+    <string name="back">Revenir en arrière</string>
 </resources>

@@ -1,8 +1,5 @@
 package com.example.forestry.ui.navigation
 
-import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -15,13 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.forestry.viewmodel.ForestryViewModel
-import com.example.forestry.ui.screens.LoginScreen
-import com.example.forestry.ui.screens.ProjectListScreen
-import com.example.forestry.ui.theme.MapScreen
 import com.example.forestry.ui.screens.ConfigurationScreen
+import com.example.forestry.ui.screens.LoginScreen
+import com.example.forestry.ui.screens.NewTreeContent
 import com.example.forestry.ui.screens.NewTreeScreen
 import com.example.forestry.ui.screens.PreferencesScreen
+import com.example.forestry.ui.screens.ProjectListScreen
+import com.example.forestry.ui.theme.MapScreen
+import com.example.forestry.viewmodel.ForestryViewModel
 
 @Composable
 fun Navigation(viewModel: ForestryViewModel, modifier: Modifier = Modifier) {

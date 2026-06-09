@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import androidx.room.Room
 import com.example.forestry.data.api.ForestryAPI
-import com.example.forestry.data.dao.ForestryDao
 import com.example.forestry.data.database.ForestryDatabase
 import com.example.forestry.data.mapper.toEntity
 import com.example.forestry.data.mapper.toModel
@@ -20,7 +19,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 /**
  * Handles communication with the Forestry API
  */
-class APIRepository(private val context: Context) : APIRepositoryLike {
+class APIRepository(context: Context) : APIRepositoryLike {
     private val dao = Room.databaseBuilder(context, ForestryDatabase::class.java, "app_db").build().forestryDao()
 
     private val api: ForestryAPI by lazy {

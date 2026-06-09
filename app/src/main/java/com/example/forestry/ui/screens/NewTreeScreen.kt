@@ -7,49 +7,35 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Build
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.forestry.R
+import com.example.forestry.data.models.Project
 import com.example.forestry.data.models.TreeClass
+import com.example.forestry.ui.composables.ForestryScaffold
+import com.example.forestry.ui.composables.RadioItem
+import com.example.forestry.ui.composables.SettingsItem
 import com.example.forestry.ui.navigation.Screen
-import com.example.forestry.ui.previews.FakeForestryViewModel
 import com.example.forestry.ui.previews.PreviewLightDarkCombo
 import com.example.forestry.ui.theme.ForestryTheme
 import com.example.forestry.viewmodel.ForestryViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewTreeScreen(
     viewModel: ForestryViewModel,
@@ -64,33 +50,60 @@ fun NewTreeScreen(
     val newTreeState by viewModel.newTreeState.collectAsState()
     val newTreeClass by viewModel.newTreeClass.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                ),
-                navigationIcon = {
-                    IconButton(
-                        onClick = viewModel::navigateBack
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                },
-                title = {
-                    Text("Enregistrer le nouvel arbre")
-                }
-            )
-        },
-        modifier = modifier.fillMaxSize()
+    NewTreeContent(
+        currentProject = currentProject,
+        newTreeLat = newTreeLat,
+        newTreeLon = newTreeLon,
+        newTreeEssence = newTreeEssence,
+        newTreeDiameter = newTreeDiameter,
+        newTreeHeight = newTreeHeight,
+        newTreeState = newTreeState,
+        newTreeClass = newTreeClass,
+        onNavigateBack = viewModel::navigateBack,
+        onChangeProjectClick = { viewModel.navigateTo(Screen.PROJECTS) },
+        onEssenceTextFieldInput = viewModel::setNewTreeEssence,
+        onDiameterTextFieldInput = viewModel::setNewTreeDiameter,
+        onHeightTextFieldInput = viewModel::setNewTreeHeight,
+        onStateTextFieldInput = viewModel::setNewTreeState,
+        onClassRadioInput = viewModel::setNewTreeClass,
+        onConfirmClick = { viewModel.createNewTree(); viewModel.navigateBack() },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun NewTreeContent(
+    currentProject: Project?,
+    newTreeLat: Double,
+    newTreeLon: Double,
+    newTreeEssence: String,
+    newTreeDiameter: String,
+    newTreeHeight: String,
+    newTreeState: String,
+    newTreeClass: TreeClass,
+    onNavigateBack: () -> Unit,
+    onChangeProjectClick: () -> Unit,
+    onEssenceTextFieldInput: (String) -> Unit,
+    onDiameterTextFieldInput: (String) -> Unit,
+    onHeightTextFieldInput: (String) -> Unit,
+    onStateTextFieldInput: (String) -> Unit,
+    onClassRadioInput: (TreeClass) -> Unit,
+    onConfirmClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+
+    ForestryScaffold(
+        title = "Enregistrer le nouvel arbre",
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
     ) { innerPadding ->
         Column(
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(8.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .padding(start = 8.dp, top = 8.dp, end = 8.dp)
                     .fillMaxWidth()
                     .background(
                         MaterialTheme.colorScheme.surfaceContainer,
@@ -98,9 +111,9 @@ fun NewTreeScreen(
                     )
             ) {
                 SettingsItem(
-                    painterResource(R.drawable.icon_forest_filled),
-                    "Changer le projet actuel",
-                    { viewModel.navigateTo(Screen.PROJECTS) },
+                    icon = painterResource(R.drawable.icon_forest_filled),
+                    text = "Changer le projet actuel",
+                    onClick = onChangeProjectClick,
                     underText = currentProject?.name
                 )
             }
@@ -117,11 +130,11 @@ fun NewTreeScreen(
                 enabled = false,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp, top = 8.dp, end = 8.dp)
+                    .padding(top = 8.dp)
             )
             TextField(
                 value = newTreeEssence,
-                onValueChange = viewModel::setNewTreeEssence,
+                onValueChange = onEssenceTextFieldInput,
                 leadingIcon = {
                     Icon(
                         painter = painterResource(R.drawable.icon_tree_filled),
@@ -135,12 +148,12 @@ fun NewTreeScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp, top = 8.dp, end = 8.dp)
+                    .padding(top = 8.dp)
             )
             Row {
                 TextField(
-                    value = newTreeDiameter.toString(),
-                    onValueChange = { viewModel.setNewTreeDiameter(it.toDouble()) },
+                    value = newTreeDiameter,
+                    onValueChange = onDiameterTextFieldInput,
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.icon_diameter),
@@ -154,11 +167,11 @@ fun NewTreeScreen(
                     ),
                     modifier = Modifier
                         .fillMaxWidth(0.5f)
-                        .padding(start = 8.dp, top = 8.dp, end = 4.dp)
+                        .padding(top = 8.dp, end = 4.dp)
                 )
                 TextField(
-                    value = newTreeHeight.toString(),
-                    onValueChange = { viewModel.setNewTreeHeight(it.toDouble()) },
+                    value = newTreeHeight,
+                    onValueChange = onHeightTextFieldInput,
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.icon_height),
@@ -171,12 +184,12 @@ fun NewTreeScreen(
                         imeAction = ImeAction.Next
                     ),
                     modifier = Modifier
-                        .padding(start = 4.dp, top = 8.dp, end = 8.dp)
+                        .padding(start = 4.dp, top = 8.dp)
                 )
             }
             TextField(
                 value = newTreeState,
-                onValueChange = viewModel::setNewTreeState,
+                onValueChange = onStateTextFieldInput,
                 leadingIcon = {
                     Icon(
                         painter = painterResource(R.drawable.icon_state),
@@ -190,11 +203,11 @@ fun NewTreeScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp, top = 8.dp, end = 8.dp)
+                    .padding(top = 8.dp)
             )
             Column(
                 modifier = Modifier
-                    .padding(start = 8.dp, top = 8.dp, end = 8.dp)
+                    .padding(top = 8.dp)
                     .fillMaxWidth()
                     .background(
                         MaterialTheme.colorScheme.surfaceContainer,
@@ -202,7 +215,7 @@ fun NewTreeScreen(
                     )
             ) {
                 Text(
-                    "Classe",
+                    text = "Classe",
                     modifier = Modifier.padding(start = 8.dp, top = 8.dp)
                 )
                 Row(
@@ -210,26 +223,25 @@ fun NewTreeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     RadioItem(
-                        "Petit",
-                        newTreeClass is TreeClass.SMALL,
-                        { viewModel.setNewTreeClass(TreeClass.SMALL) }
+                        text = "Petit",
+                        selected = newTreeClass is TreeClass.SMALL,
+                        onClick = { onClassRadioInput(TreeClass.SMALL) }
                     )
                     RadioItem(
-                        "Moyen",
-                        newTreeClass is TreeClass.MEDIUM,
-                        { viewModel.setNewTreeClass(TreeClass.MEDIUM) }
+                        text = "Moyen",
+                        selected = newTreeClass is TreeClass.MEDIUM,
+                        onClick = { onClassRadioInput(TreeClass.MEDIUM) }
                     )
                     RadioItem(
-                        "Gros",
-                        newTreeClass is TreeClass.BIG,
-                        { viewModel.setNewTreeClass(TreeClass.BIG) }
+                        text = "Gros",
+                        selected = newTreeClass is TreeClass.BIG,
+                        onClick = { onClassRadioInput(TreeClass.BIG) }
                     )
                 }
             }
             Spacer(Modifier.weight(1f))
             Box(
                 modifier = Modifier
-                    .padding(start = 8.dp, top = 8.dp, end = 8.dp)
                     .fillMaxWidth()
                     .background(
                         MaterialTheme.colorScheme.tertiaryContainer,
@@ -237,18 +249,23 @@ fun NewTreeScreen(
                     )
             ) {
                 Text(
-                    "Vérifiez bien l'exactitude des informations de l'arbre, ils ne pourront plus être modifier une fois validé!",
+                    text = "Vérifiez bien l'exactitude des informations de l'arbre, ils ne pourront plus être modifier une fois validé!",
                     modifier = Modifier.padding(8.dp)
                 )
             }
             Button(
-                onClick = { viewModel.createNewTree(); viewModel.navigateBack() },
+                onClick = onConfirmClick,
+                enabled = currentProject != null &&
+                        newTreeEssence.isNotBlank() &&
+                        newTreeDiameter.isNotBlank() &&
+                        newTreeHeight.isNotBlank() &&
+                        newTreeState.isNotBlank(),
                 modifier = Modifier
-                    .padding(4.dp)
+                    .padding(top = 4.dp)
                     .fillMaxWidth()
             ) {
                 Text(
-                    "Confirmer",
+                    text = "Confirmer",
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -259,8 +276,25 @@ fun NewTreeScreen(
 @SuppressLint("ViewModelConstructorInComposable")
 @PreviewLightDarkCombo
 @Composable
-fun NewTreeScreenPreview(modifier: Modifier = Modifier) {
+fun NewTreeScreenPreview() {
     ForestryTheme {
-        NewTreeScreen(FakeForestryViewModel())
+        NewTreeContent(
+            currentProject = null,
+            newTreeLat = 0.0,
+            newTreeLon = 0.0,
+            newTreeEssence = "",
+            newTreeDiameter = "",
+            newTreeHeight = "",
+            newTreeState = "",
+            newTreeClass = TreeClass.SMALL,
+            onNavigateBack = {},
+            onChangeProjectClick = {},
+            onEssenceTextFieldInput = {},
+            onDiameterTextFieldInput = {},
+            onHeightTextFieldInput = {},
+            onStateTextFieldInput = {},
+            onClassRadioInput = {},
+            onConfirmClick = {}
+        )
     }
 }

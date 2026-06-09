@@ -3,9 +3,6 @@ package com.example.forestry.viewmodel
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.forestry.data.models.BluetoothConnectionState
@@ -123,7 +120,6 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
     }
 
     private val _token = MutableStateFlow("")
-    val token: StateFlow<String> = _token
 
     private val _online = MutableStateFlow(false)
     val online: StateFlow<Boolean> = _online
@@ -217,8 +213,10 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
         _gnssPos.value = GeoPoint(lat, lon)
     }
 
-    fun getBondedDevices(): List<BluetoothDevice> {
-        return gnssRepository.getBondedDevices()
+    private val _bondedDevices = MutableStateFlow<List<BluetoothDevice>>(gnssRepository.getBondedDevices())
+    val bondedDevices: StateFlow<List<BluetoothDevice>> = _bondedDevices.asStateFlow()
+    fun refreshBondedDevices() {
+        _bondedDevices.value = gnssRepository.getBondedDevices()
     }
 
     val incomingData: StateFlow<String?> = gnssRepository.incomingData
@@ -246,11 +244,10 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
         _projectCreationMode.value = mode
     }
 
-    private val _projectCreationName = MutableStateFlow("")
-    val projectCreationName: StateFlow<String> = _projectCreationName
-
-    fun onProjectCreationNameChange(newText: String) {
-        _projectCreationName.value = newText
+    private val _newProjectName = MutableStateFlow("")
+    val newProjectName: StateFlow<String> = _newProjectName
+    fun setNewProjectName(newText: String) {
+        _newProjectName.value = newText
     }
 
     private val _projectDelimiterPoints = MutableStateFlow(mutableListOf<GeoPoint>())
@@ -263,10 +260,10 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
 
     fun closeProjectDelimiter() {
         _projectCreationMode.value = false
-        val newProject = Project(UUID.randomUUID(), _projectCreationName.value, _projectDelimiterPoints.value.toList())
+        val newProject = Project(UUID.randomUUID(), _newProjectName.value, _projectDelimiterPoints.value.toList())
         addProject(newProject)
         setCurrentProject(newProject)
-        _projectCreationName.value = ""
+        _newProjectName.value = ""
         _projectDelimiterPoints.value.clear()
         navigateTo(Screen.CONFIGURATION)
     }
@@ -291,15 +288,15 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
         _newTreeEssence.value = essence
     }
 
-    private val _newTreeDiameter = MutableStateFlow(0.0)
-    val newTreeDiameter: StateFlow<Double> = _newTreeDiameter
-    fun setNewTreeDiameter(diameter: Double) {
+    private val _newTreeDiameter = MutableStateFlow("")
+    val newTreeDiameter: StateFlow<String> = _newTreeDiameter
+    fun setNewTreeDiameter(diameter: String) {
         _newTreeDiameter.value = diameter
     }
 
-    private val _newTreeHeight = MutableStateFlow(0.0)
-    val newTreeHeight: StateFlow<Double> = _newTreeHeight
-    fun setNewTreeHeight(height: Double) {
+    private val _newTreeHeight = MutableStateFlow("")
+    val newTreeHeight: StateFlow<String> = _newTreeHeight
+    fun setNewTreeHeight(height: String) {
         _newTreeHeight.value = height
     }
 
@@ -316,11 +313,11 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
     }
 
     fun createNewTree() {
-        val newTree = Tree(UUID.randomUUID(), _newTreeLat.value, _newTreeLon.value, _newTreeEssence.value, _newTreeDiameter.value, _newTreeHeight.value, _newTreeClass.value, _newTreeState.value, _currentProject.value!!.id)
+        val newTree = Tree(UUID.randomUUID(), _newTreeLat.value, _newTreeLon.value, _newTreeEssence.value, _newTreeDiameter.value.toDouble(), _newTreeHeight.value.toDouble(), _newTreeClass.value, _newTreeState.value, _currentProject.value!!.id)
         addTree(newTree)
         _newTreeEssence.value = ""
-        _newTreeDiameter.value = 0.0
-        _newTreeHeight.value = 0.0
+        _newTreeDiameter.value = ""
+        _newTreeHeight.value = ""
         _newTreeClass.value = TreeClass.SMALL
         _newTreeState.value = ""
     }

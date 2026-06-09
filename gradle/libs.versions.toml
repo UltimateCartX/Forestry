@@ -19,6 +19,7 @@ playServicesLocation = "21.3.0"
 retrofit = "2.9.0"
 roomKtx = "2.8.4"
 roomRuntime = "2.8.4"
+preferenceKtx = "1.2.1"
 
 [libraries]
 accompanist-navigation-animation = { module = "com.google.accompanist:accompanist-navigation-animation", version.ref = "accompanistNavigationAnimation" }
@@ -49,6 +50,7 @@ androidx-navigation-compose-android = { group = "androidx.navigation", name = "n
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
