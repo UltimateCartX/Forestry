@@ -1,7 +1,7 @@
-package com.example.forestry.data.mapper
+package com.example.forestry.data.database.mapper
 
 import androidx.room.TypeConverter
-import com.example.forestry.data.models.TreeClass
+import com.example.forestry.data.enums.TreeClass
 import org.osmdroid.util.GeoPoint
 import java.util.UUID
 
@@ -19,7 +19,7 @@ class Converters {
 
     @TypeConverter
     fun fromPlot(points: List<GeoPoint>?): String? {
-        return points?.let { "POLYGON(${points.joinToString(", ") { "${it.longitude} ${it.latitude}" } }" }
+        return points?.let { "POLYGON(${points.joinToString(", ") { "${it.longitude} ${it.latitude}" } })" }
     }
 
     @TypeConverter
@@ -29,16 +29,11 @@ class Converters {
 
     @TypeConverter
     fun fromTreeClass(treeClass: TreeClass?): String? {
-        return treeClass?.toString
+        return treeClass?.getDisplayName()
     }
 
     @TypeConverter
     fun toTreeClass(name: String?): TreeClass? {
-        return name?.let { when(name) {
-            "small" -> TreeClass.SMALL
-            "medium" -> TreeClass.MEDIUM
-            "big" -> TreeClass.BIG
-            else -> null
-        } }
+        return name?.let { TreeClass.getTreeClass(name) }
     }
 }

@@ -1,17 +1,12 @@
 package com.example.forestry.data.repositories
 
-import android.content.Context
 import com.example.forestry.data.datastore.DataStoreManager
-import com.example.forestry.data.models.ThemeMode
-import com.example.forestry.ui.previews.DataStoreRepositoryLike
+import com.example.forestry.data.enums.ThemeMode
 
-class DataStoreRepository(private val context: Context) : DataStoreRepositoryLike {
+class DataStoreRepository(private val dataStoreManager: DataStoreManager) {
 
-    private val dataStoreManager = DataStoreManager(context)
-
-    override val themeMode = dataStoreManager.themeModeFlow
-
-    override suspend fun setTheme(mode: ThemeMode) {
+    val themeMode = dataStoreManager.themeModeFlow
+    suspend fun setTheme(mode: ThemeMode) {
         dataStoreManager.setThemeMode(mode)
     }
 }

@@ -1,4 +1,4 @@
-package com.example.forestry.data.models
+package com.example.forestry.data.api.requests
 
 data class LoginRequest(
     val email: String,

@@ -1,8 +1,8 @@
 package com.example.forestry.data.api
 
-import com.example.forestry.data.models.LoginRequest
+import com.example.forestry.data.api.requests.LoginRequest
+import com.example.forestry.data.api.responses.TokenResponse
 import com.example.forestry.data.models.Project
-import com.example.forestry.data.models.TokenResponse
 import com.example.forestry.data.models.Tree
 import com.example.forestry.data.models.User
 import retrofit2.http.Body
@@ -10,16 +10,12 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 
-
-/**
- * Define Forestry API routes to be used by the application
- */
 interface ForestryAPI {
     @POST("login")
-    suspend fun login(@Body login: LoginRequest): TokenResponse
+    suspend fun login(@Body loginRequest: LoginRequest): TokenResponse
 
     @GET("@me")
-    suspend fun me(
+    suspend fun getCurrentUser(
         @Header("Authorization") token: String
     ): User
 
@@ -32,4 +28,16 @@ interface ForestryAPI {
     suspend fun getProjects(
         @Header("Authorization") token: String
     ): List<Project>
+
+    @POST("projects")
+    suspend fun addProject(
+        @Header("Authorization") token: String,
+        @Body project: Project
+    )
+
+    @POST("trees")
+    suspend fun addTree(
+        @Header("Authorization") token: String,
+        @Body tree: Tree
+    )
 }

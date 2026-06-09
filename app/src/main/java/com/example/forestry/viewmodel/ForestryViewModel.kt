@@ -3,79 +3,43 @@ package com.example.forestry.viewmodel
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.forestry.data.models.BluetoothConnectionState
-import com.example.forestry.data.models.GNSSState
-import com.example.forestry.data.models.LoginRequest
+import com.example.forestry.data.api.ForestryAPI
+import com.example.forestry.data.api.requests.LoginRequest
+import com.example.forestry.data.database.ForestryDatabase
+import com.example.forestry.data.datastore.DataStoreManager
+import com.example.forestry.data.enums.BluetoothConnectionState
+import com.example.forestry.data.enums.GNSSState
+import com.example.forestry.data.enums.ThemeMode
+import com.example.forestry.data.enums.TreeClass
 import com.example.forestry.data.models.Project
-import com.example.forestry.data.models.ThemeMode
-import com.example.forestry.data.models.TokenResponse
 import com.example.forestry.data.models.Tree
-import com.example.forestry.data.models.TreeClass
-import com.example.forestry.data.models.User
-import com.example.forestry.data.repositories.APIRepository
 import com.example.forestry.data.repositories.DataStoreRepository
+import com.example.forestry.data.repositories.ForestryRepository
 import com.example.forestry.data.repositories.GNSSRepository
 import com.example.forestry.ui.navigation.NavEvent
 import com.example.forestry.ui.navigation.Screen
-import com.example.forestry.ui.previews.APIRepositoryLike
-import com.example.forestry.ui.previews.DataStoreRepositoryLike
-import com.example.forestry.ui.previews.GNSSRepositoryLike
-import kotlinx.coroutines.flow.Flow
+import com.example.forestry.utils.DegreeConverter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.util.UUID
 
-/**
-    The main ViewModel of the application
-
-    Handles communication between the UI layer and the data layer
- */
-open class ForestryViewModel(context: Context? = null): ViewModel() {
-
-    private val apiRepository = when (context) {
-        is Context -> APIRepository(context)
-        else -> object : APIRepositoryLike {
-            override suspend fun login(login: LoginRequest): TokenResponse { return TokenResponse("") }
-            override suspend fun getMe(token: String): User { return User("", "John", "Doe", "john.doe@example.com", "Standard") }
-            override suspend fun getTrees(token: String): List<Tree> { return emptyList() }
-            override suspend fun getProjects(token: String): List<Project> { return emptyList() }
-            override suspend fun addProject(token: String, project: Project) {}
-            override suspend fun addTree(token: String, tree: Tree) {}
-        }
-    }
-
-    private val dataStoreRepository : DataStoreRepositoryLike = when (context) {
-        is Context -> DataStoreRepository(context)
-        else -> object : DataStoreRepositoryLike {
-            override val themeMode: Flow<ThemeMode> = flow { emit(ThemeMode.SYSTEM) }
-            override suspend fun setTheme(mode: ThemeMode) {}
-        }
-    }
-
-    private val gnssRepository : GNSSRepositoryLike = when (context) {
-        is Context -> GNSSRepository(context)
-        else -> object : GNSSRepositoryLike {
-            override val connectionState: StateFlow<BluetoothConnectionState> = MutableStateFlow<BluetoothConnectionState>(BluetoothConnectionState.Disconnected).asStateFlow()
-            override val incomingData: StateFlow<String?> = MutableStateFlow<String?>(null).asStateFlow()
-            override fun getBondedDevices(): List<BluetoothDevice> { return emptyList() }
-            override fun connect(device: BluetoothDevice) {}
-            override fun disconnect() {}
-        }
-    }
-
+class ForestryViewModel(
+    private val forestryRepository: ForestryRepository,
+    private val dataStoreRepository: DataStoreRepository,
+    private val gnssRepository: GNSSRepository
+): ViewModel() {
     // Preferences
 
     val themeMode = dataStoreRepository.themeMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.SYSTEM)
@@ -123,35 +87,28 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
     }
 
     private val _token = MutableStateFlow("")
-    val token: StateFlow<String> = _token
 
     private val _online = MutableStateFlow(false)
     val online: StateFlow<Boolean> = _online
 
-    fun testAPI() {
+    fun onLoginClick() {
         viewModelScope.launch {
             try {
-                apiRepository.login(LoginRequest("a", "a"))
-                _online.value = true
-            } catch (e: Exception) {
-                e.message?.let { Log.e("Forestry", it) }
-                _online.value = false
-            }
-        }
-    }
-
-    fun login() {
-        viewModelScope.launch {
-            try {
-                val response = apiRepository.login(LoginRequest(_emailText.value, _passwordText.value))
+                val response = forestryRepository.login(LoginRequest(_emailText.value, _passwordText.value))
                 Log.d("Forestry", response.toString())
                 _token.value = response.access_token
                 _isConnected.value = true
+                forestryRepository.syncData(response.access_token)
                 navigateTo(Screen.MAP, true)
             } catch (e: Exception) {
                 e.message?.let { Log.e("Forestry", it) }
             }
         }
+    }
+
+    fun onOfflineClick() {
+        _isConnected.value = false
+        navigateTo(Screen.MAP, true)
     }
 
     fun logoff() {
@@ -162,7 +119,7 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
     fun getMe() {
         viewModelScope.launch {
             try {
-                val response = apiRepository.getMe("Bearer " + _token.value)
+                val response = forestryRepository.getMe(_token.value)
                 Log.d("Forestry", response.toString())
             } catch (e: Exception) {
                 e.message?.let { Log.e("Forestry", it) }
@@ -175,7 +132,7 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
 
     fun loadTrees() {
         viewModelScope.launch {
-            _trees.value = apiRepository.getTrees("Bearer " + _token.value)
+            _trees.value = forestryRepository.getTrees(_token.value)
         }
     }
 
@@ -184,26 +141,46 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
 
     fun loadProjects() {
         viewModelScope.launch {
-            _projects.value = apiRepository.getProjects("Bearer " + _token.value)
+            _projects.value = forestryRepository.getProjects(_token.value)
         }
     }
 
     fun addProject(project: Project) {
         viewModelScope.launch {
-            apiRepository.addProject("Bearer " + _token.value, project)
+            forestryRepository.addProject(_token.value, project)
         }
         loadProjects()
     }
 
     fun addTree(tree: Tree) {
         viewModelScope.launch {
-            apiRepository.addTree("Bearer " + _token.value, tree)
+            forestryRepository.addTree(_token.value, tree)
         }
+    }
+
+    // Map control
+
+    private val _mapPos = MutableStateFlow(GeoPoint(48.294025, 4.01190814))
+    val mapCenter: StateFlow<GeoPoint> = _mapPos
+    fun setMapPos(pos: GeoPoint) {
+        _mapPos.value = pos
+    }
+
+    private val _mapZoom = MutableStateFlow(17.0)
+    val mapZoom: StateFlow<Double> = _mapZoom
+    fun setMapZoom(zoom: Double) {
+        _mapZoom.value = zoom
+    }
+
+    fun onGnssMarkerClick() {
+            setNewTreeLat(_gnssPos.value.latitude)
+            setNewTreeLon(_gnssPos.value.longitude)
+            navigateTo(Screen.NEWTREE)
     }
 
     // GNSS
 
-    open val gnssConnectionState: StateFlow<BluetoothConnectionState> = gnssRepository.connectionState
+    val gnssConnectionState: StateFlow<BluetoothConnectionState> = gnssRepository.connectionState
 
     private val _gnssState = MutableStateFlow<GNSSState>(GNSSState.DISCONNECTED)
     val gnssState: StateFlow<GNSSState> = _gnssState
@@ -217,14 +194,47 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
         _gnssPos.value = GeoPoint(lat, lon)
     }
 
-    fun getBondedDevices(): List<BluetoothDevice> {
-        return gnssRepository.getBondedDevices()
+    private val _bondedDevices = MutableStateFlow<List<BluetoothDevice>>(gnssRepository.getBondedDevices())
+    val bondedDevices: StateFlow<List<BluetoothDevice>> = _bondedDevices.asStateFlow()
+    fun refreshBondedDevices() {
+        _bondedDevices.value = gnssRepository.getBondedDevices()
     }
 
-    val incomingData: StateFlow<String?> = gnssRepository.incomingData
+    val gnssData = gnssRepository.incomingData
+    init {
+        viewModelScope.launch {
+            gnssData.collect { data ->
+                val startIndex = data.indexOf("\$GNGGA")
+                if (startIndex != -1) {
+                    try {
+                        val startData = data.substring(startIndex + 1)
+                        val endIndex = startData.indexOf("$")
+                        val gngga = if (endIndex != -1) startData.substring(0, endIndex) else startData
 
-    fun connect(device: BluetoothDevice) {
-        gnssRepository.connect(device)
+                        val gnggaValues = gngga.split(",")
+
+                        if (gnggaValues.size > 4 && gnggaValues[2].isNotEmpty() && gnggaValues[4].isNotEmpty()) {
+                            val lat = DegreeConverter.toDecimalDegree(gnggaValues[2])
+                            val lon = DegreeConverter.toDecimalDegree(gnggaValues[4])
+
+                            setGnssPos(lat, lon)
+                            setGnssState(GNSSState.WORKING)
+                        } else {
+                            setGnssState(GNSSState.ERROR)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("Forestry", "Parsing error: ${e.message}")
+                        setGnssState(GNSSState.ERROR)
+                    }
+                }
+            }
+        }
+    }
+
+    fun onBluetoothDeviceClick(device: BluetoothDevice) {
+        viewModelScope.launch {
+            gnssRepository.connect(device)
+        }
     }
 
     override fun onCleared() {
@@ -246,28 +256,35 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
         _projectCreationMode.value = mode
     }
 
-    private val _projectCreationName = MutableStateFlow("")
-    val projectCreationName: StateFlow<String> = _projectCreationName
-
-    fun onProjectCreationNameChange(newText: String) {
-        _projectCreationName.value = newText
+    private val _newProjectName = MutableStateFlow("")
+    val newProjectName: StateFlow<String> = _newProjectName
+    fun onProjectNameChange(newText: String) {
+        _newProjectName.value = newText
     }
 
-    private val _projectDelimiterPoints = MutableStateFlow(mutableListOf<GeoPoint>())
-    val projectDelimiterPoints: StateFlow<MutableList<GeoPoint>> = _projectDelimiterPoints
+    private val _projectPerimeterPoints = MutableStateFlow<List<GeoPoint>>(emptyList())
+    val projectPerimeterPoints = _projectPerimeterPoints.asStateFlow()
+    fun addProjectPerimeterPoint(point: GeoPoint) {
+        _projectPerimeterPoints.update { currentList -> currentList + point }
+    }
+    fun removeLastProjectPerimeterPoint() {
+        _projectPerimeterPoints.update { currentList ->
+            if (currentList.isNotEmpty()) currentList.dropLast(1) else currentList
+        }
+    }
 
     fun openProjectDelimiter() {
         _projectCreationMode.value = true
         navigateTo(Screen.MAP)
     }
 
-    fun closeProjectDelimiter() {
+    fun onConfirmProjectCreationClick() {
         _projectCreationMode.value = false
-        val newProject = Project(UUID.randomUUID(), _projectCreationName.value, _projectDelimiterPoints.value.toList())
+        val newProject = Project(UUID.randomUUID(), _newProjectName.value, _projectPerimeterPoints.value.toList())
         addProject(newProject)
         setCurrentProject(newProject)
-        _projectCreationName.value = ""
-        _projectDelimiterPoints.value.clear()
+        _newProjectName.value = ""
+        _projectPerimeterPoints.value = emptyList()
         navigateTo(Screen.CONFIGURATION)
     }
 
@@ -291,15 +308,15 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
         _newTreeEssence.value = essence
     }
 
-    private val _newTreeDiameter = MutableStateFlow(0.0)
-    val newTreeDiameter: StateFlow<Double> = _newTreeDiameter
-    fun setNewTreeDiameter(diameter: Double) {
+    private val _newTreeDiameter = MutableStateFlow("")
+    val newTreeDiameter: StateFlow<String> = _newTreeDiameter
+    fun setNewTreeDiameter(diameter: String) {
         _newTreeDiameter.value = diameter
     }
 
-    private val _newTreeHeight = MutableStateFlow(0.0)
-    val newTreeHeight: StateFlow<Double> = _newTreeHeight
-    fun setNewTreeHeight(height: Double) {
+    private val _newTreeHeight = MutableStateFlow("")
+    val newTreeHeight: StateFlow<String> = _newTreeHeight
+    fun setNewTreeHeight(height: String) {
         _newTreeHeight.value = height
     }
 
@@ -316,11 +333,21 @@ open class ForestryViewModel(context: Context? = null): ViewModel() {
     }
 
     fun createNewTree() {
-        val newTree = Tree(UUID.randomUUID(), _newTreeLat.value, _newTreeLon.value, _newTreeEssence.value, _newTreeDiameter.value, _newTreeHeight.value, _newTreeClass.value, _newTreeState.value, _currentProject.value!!.id)
+        val newTree = Tree(
+            id = UUID.randomUUID(),
+            latitude = _newTreeLat.value,
+            longitude = _newTreeLon.value,
+            essence = _newTreeEssence.value,
+            diameter = _newTreeDiameter.value.toDouble(),
+            height = _newTreeHeight.value.toDouble(),
+            cclass = _newTreeClass.value,
+            state = _newTreeState.value,
+            projectId = _currentProject.value!!.id
+        )
         addTree(newTree)
         _newTreeEssence.value = ""
-        _newTreeDiameter.value = 0.0
-        _newTreeHeight.value = 0.0
+        _newTreeDiameter.value = ""
+        _newTreeHeight.value = ""
         _newTreeClass.value = TreeClass.SMALL
         _newTreeState.value = ""
     }

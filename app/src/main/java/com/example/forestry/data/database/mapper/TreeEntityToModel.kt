@@ -1,9 +1,9 @@
-package com.example.forestry.data.mapper
+package com.example.forestry.data.database.mapper
 
-import com.example.forestry.data.entities.TreeEntity
+import com.example.forestry.data.database.entities.TreeEntity
 import com.example.forestry.data.models.Tree
 
-fun Tree.toEntity() = TreeEntity(
+fun TreeEntity.toModel() = Tree(
     id = id,
     latitude = latitude,
     longitude = longitude,

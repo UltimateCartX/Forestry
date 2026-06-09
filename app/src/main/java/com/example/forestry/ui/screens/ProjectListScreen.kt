@@ -1,9 +1,9 @@
 package com.example.forestry.ui.screens
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,9 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,28 +21,48 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.forestry.ui.navigation.Screen
-import com.example.forestry.ui.previews.FakeForestryViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.forestry.R
+import com.example.forestry.data.models.Project
+import com.example.forestry.ui.composables.ProjectItem
 import com.example.forestry.ui.previews.PreviewLightDarkCombo
 import com.example.forestry.ui.theme.ForestryTheme
 import com.example.forestry.viewmodel.ForestryViewModel
+import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectListScreen(
     viewModel: ForestryViewModel,
+) {
+    val projects by viewModel.projects.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadProjects()
+    }
+
+    ProjectListContent(
+        projects = projects,
+        onProjectClick = { project ->
+            viewModel.setCurrentProject(project)
+            viewModel.navigateBack()
+        },
+        onBackClick = viewModel::navigateBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProjectListContent(
+    projects: List<Project>,
+    onProjectClick: (Project) -> Unit,
+    onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    viewModel.loadProjects()
-    val projects by viewModel.projects.collectAsState()
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -55,9 +72,12 @@ fun ProjectListScreen(
                 ),
                 navigationIcon = {
                     IconButton(
-                        onClick = viewModel::navigateBack
+                        onClick = onBackClick
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
                 title = {
@@ -67,68 +87,31 @@ fun ProjectListScreen(
         },
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
-        LazyColumn(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxWidth()
-        ) {
-            items(projects) { project ->
-                Button(
-                    onClick = { viewModel.setCurrentProject(project); viewModel.navigateBack() },
-                    shape = RectangleShape,
-                    contentPadding = PaddingValues(0.dp),
-                    colors = ButtonColors(
-                        Color.Transparent,
-                        MaterialTheme.colorScheme.onSurface,
-                        MaterialTheme.colorScheme.error,
-                        MaterialTheme.colorScheme.onError
-                    ),
-                ) {
+        if (projects.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Aucun projet")
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxWidth()
+            ) {
+                items(
+                    items = projects,
+                    key = { project -> project.id }
+                ) { project ->
                     ProjectItem(
                         name = project.name,
-                        "Forestier Hors Ligne",
+                        author = "Forestier Hors Ligne",
+                        onClick = { onProjectClick(project) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun ProjectItem(
-    name: String,
-    author: String,
-    modifier: Modifier = Modifier
-) {
-    Card(modifier.padding(8.dp)) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Spacer(Modifier.padding(4.dp))
-            Text(
-                text = author,
-                style = MaterialTheme.typography.bodyLarge
-            )/*
-            Spacer(Modifier.padding(4.dp))
-            Row {
-                Text(
-                    text = "Nombre d'arbres: 57",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text(
-                    text = "Nombre de forestiers actifs: 57",
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }*/
         }
     }
 }
@@ -138,14 +121,13 @@ fun ProjectItem(
 @Composable
 fun ProjectListPreview(modifier: Modifier = Modifier) {
     ForestryTheme {
-        ProjectListScreen(FakeForestryViewModel())
-    }
-}
-
-@PreviewLightDarkCombo
-@Composable
-fun ProjectItemPreview(modifier: Modifier = Modifier) {
-    ForestryTheme {
-        ProjectItem("Forêt de bois de boulogne", "Chépa Chépa")
+        ProjectListContent(
+            projects = listOf(
+                Project(UUID.randomUUID(), "Forêt A", emptyList()),
+                Project(UUID.randomUUID(), "Forêt B", emptyList()),
+            ),
+            onProjectClick = {},
+            onBackClick = {}
+        )
     }
 }

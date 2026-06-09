@@ -1,12 +1,11 @@
-package com.example.forestry.data.dao
+package com.example.forestry.data.database
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.forestry.data.entities.ProjectEntity
-import com.example.forestry.data.entities.TreeEntity
-import kotlinx.coroutines.flow.Flow
+import com.example.forestry.data.database.entities.ProjectEntity
+import com.example.forestry.data.database.entities.TreeEntity
 import java.util.UUID
 
 @Dao

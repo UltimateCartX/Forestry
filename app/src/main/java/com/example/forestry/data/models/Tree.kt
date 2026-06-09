@@ -1,5 +1,6 @@
 package com.example.forestry.data.models
 
+import com.example.forestry.data.enums.TreeClass
 import java.util.UUID
 
 data class Tree(

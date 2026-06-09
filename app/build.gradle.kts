@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.osmdroid.android)
     implementation(libs.play.services.location)
     implementation(libs.androidx.navigation.compose.android)
@@ -59,6 +60,7 @@ dependencies {
     implementation(libs.converter.gson)
 
     implementation(libs.room.runtime)
+    implementation(libs.androidx.preference.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
     implementation(libs.lifecycle.runtime.ktx)
