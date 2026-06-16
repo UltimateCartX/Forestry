@@ -18,7 +18,7 @@ class ForestryViewModelFactory(private val application: Application) :
         if (modelClass.isAssignableFrom(ForestryViewModel::class.java)) {
             val api: ForestryAPI by lazy {
                 Retrofit.Builder()
-                    .baseUrl("https://gnssv2.alwaysdata.net/api/")
+                    .baseUrl("https://forestry.ultimatecartx.dev/api/")
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
                     .create(ForestryAPI::class.java)
