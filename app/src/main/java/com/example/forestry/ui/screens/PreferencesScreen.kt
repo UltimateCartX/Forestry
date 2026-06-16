@@ -94,7 +94,7 @@ fun PreferencesContent(
                     icon = Icons.Filled.Build,
                     text = "Version de l'application",
                     onClick = {},
-                    underText = "a-0.24.2"
+                    underText = "a-0.25.0"
                 )
             }
         }

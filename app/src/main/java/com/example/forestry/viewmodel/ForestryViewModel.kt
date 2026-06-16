@@ -1,14 +1,10 @@
 package com.example.forestry.viewmodel
 
 import android.bluetooth.BluetoothDevice
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.forestry.data.api.ForestryAPI
 import com.example.forestry.data.api.requests.LoginRequest
-import com.example.forestry.data.database.ForestryDatabase
-import com.example.forestry.data.datastore.DataStoreManager
 import com.example.forestry.data.enums.BluetoothConnectionState
 import com.example.forestry.data.enums.GNSSState
 import com.example.forestry.data.enums.ThemeMode
@@ -31,8 +27,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.util.UUID
 
 class ForestryViewModel(
@@ -69,9 +63,6 @@ class ForestryViewModel(
 
     // Login
 
-    private val _isConnected = MutableStateFlow(false)
-    val isConnected: StateFlow<Boolean> = _isConnected
-
     private val _emailText = MutableStateFlow("")
     val emailText: StateFlow<String> = _emailText
 
@@ -88,17 +79,16 @@ class ForestryViewModel(
 
     private val _token = MutableStateFlow("")
 
-    private val _online = MutableStateFlow(false)
-    val online: StateFlow<Boolean> = _online
+    private val _onlineMode = MutableStateFlow(false)
+    val onlineMode: StateFlow<Boolean> = _onlineMode
 
     fun onLoginClick() {
         viewModelScope.launch {
             try {
                 val response = forestryRepository.login(LoginRequest(_emailText.value, _passwordText.value))
-                Log.d("Forestry", response.toString())
-                _token.value = response.access_token
-                _isConnected.value = true
-                forestryRepository.syncData(response.access_token)
+                _token.value = response.token
+                _onlineMode.value = true
+                forestryRepository.syncData(response.token)
                 navigateTo(Screen.MAP, true)
             } catch (e: Exception) {
                 e.message?.let { Log.e("Forestry", it) }
@@ -107,13 +97,13 @@ class ForestryViewModel(
     }
 
     fun onOfflineClick() {
-        _isConnected.value = false
+        _onlineMode.value = false
         navigateTo(Screen.MAP, true)
     }
 
     fun logoff() {
         _token.value = ""
-        _isConnected.value = false
+        _onlineMode.value = false
     }
 
     fun getMe() {
@@ -280,7 +270,7 @@ class ForestryViewModel(
 
     fun onConfirmProjectCreationClick() {
         _projectCreationMode.value = false
-        val newProject = Project(UUID.randomUUID(), _newProjectName.value, _projectPerimeterPoints.value.toList())
+        val newProject = Project(UUID.randomUUID(), _newProjectName.value, _projectPerimeterPoints.value.toList(), "Forestier Hors Ligne")
         addProject(newProject)
         setCurrentProject(newProject)
         _newProjectName.value = ""
@@ -340,7 +330,7 @@ class ForestryViewModel(
             essence = _newTreeEssence.value,
             diameter = _newTreeDiameter.value.toDouble(),
             height = _newTreeHeight.value.toDouble(),
-            cclass = _newTreeClass.value,
+            treeClass = _newTreeClass.value,
             state = _newTreeState.value,
             projectId = _currentProject.value!!.id
         )

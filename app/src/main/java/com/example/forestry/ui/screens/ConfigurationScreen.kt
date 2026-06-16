@@ -68,7 +68,7 @@ fun ConfigurationScreen(
     modifier: Modifier = Modifier
 ) {
     val gnssConnectionState by viewModel.gnssConnectionState.collectAsState()
-    val onlineMode by viewModel.isConnected.collectAsState()
+    val onlineMode by viewModel.onlineMode.collectAsState()
     val currentProject by viewModel.currentProject.collectAsState()
     val bondedDevices by viewModel.bondedDevices.collectAsState()
     val newProjectName by viewModel.newProjectName.collectAsState()
@@ -168,7 +168,7 @@ fun ConfigurationContent(
                     if (currentProject != null) {
                         ProjectItem(
                             name = currentProject.name,
-                            author = "Forestier Hors Ligne",
+                            author = currentProject.ownerName,
                             onClick = onProjectClick,
                             modifier = Modifier.padding(8.dp)
                         )
@@ -391,7 +391,7 @@ fun SettingsScreenPreview() {
         ConfigurationContent(
             gnssConnectionState = BluetoothConnectionState.DISCONNECTED,
             onlineMode = false,
-            currentProject = Project(UUID.randomUUID(), "Projet A", emptyList()),
+            currentProject = Project(UUID.randomUUID(), "Projet A", emptyList(), "Forestier Hors Ligne"),
             bondedDevices = emptyList(),
             newProjectName = "",
             onNavigateBack = {},

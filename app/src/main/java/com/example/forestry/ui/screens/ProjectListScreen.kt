@@ -75,7 +75,7 @@ fun ProjectListContent(
                         onClick = onBackClick
                     ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
                         )
                     }
@@ -88,7 +88,9 @@ fun ProjectListContent(
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         if (projects.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+            ) {
                 Text("Aucun projet")
             }
         } else {
@@ -106,7 +108,7 @@ fun ProjectListContent(
                 ) { project ->
                     ProjectItem(
                         name = project.name,
-                        author = "Forestier Hors Ligne",
+                        author = project.ownerName,
                         onClick = { onProjectClick(project) },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -123,8 +125,8 @@ fun ProjectListPreview(modifier: Modifier = Modifier) {
     ForestryTheme {
         ProjectListContent(
             projects = listOf(
-                Project(UUID.randomUUID(), "Forêt A", emptyList()),
-                Project(UUID.randomUUID(), "Forêt B", emptyList()),
+                Project(UUID.randomUUID(), "Forêt A", emptyList(), "Forestier Hors Ligne"),
+                Project(UUID.randomUUID(), "Forêt B", emptyList(), "John Doe"),
             ),
             onProjectClick = {},
             onBackClick = {}
