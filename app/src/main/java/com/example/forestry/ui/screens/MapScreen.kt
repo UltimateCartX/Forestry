@@ -67,7 +67,7 @@ fun MapScreen(
     viewModel: ForestryViewModel,
     modifier: Modifier = Modifier
 ) {
-    val isOnline by viewModel.online.collectAsState()
+    val isOnline by viewModel.onlineMode.collectAsState()
     val currentProject by viewModel.currentProject.collectAsState()
     val gnssPos by viewModel.gnssPos.collectAsState()
     val gnssState by viewModel.gnssState.collectAsState()
@@ -298,14 +298,12 @@ fun Map(
 
             trees.forEach { tree ->
                 val marker = Marker(view).apply {
-                    title = "Arbre\nEssence: ${tree.essence}\nDiamètre: ${tree.diameter}cm\nHauteur: ${tree.height}m\nClasse: ${tree.cclass}\nEtat: ${tree.state}"
+                    title = "Arbre\nEssence: ${tree.essence}\nDiamètre: ${tree.diameter}cm\nHauteur: ${tree.height}m\nClasse: ${tree.treeClass.getDisplayName()}\nEtat: ${tree.state}"
                     icon = ContextCompat.getDrawable(context, R.drawable.icon_tree_hollow)
                     position = GeoPoint(tree.latitude, tree.longitude)
                 }
                 view.overlays.add(marker)
             }
-
-
 
             if (gnssState == GNSSState.WORKING) {
                 val gnssMarker = Marker(view).apply {
